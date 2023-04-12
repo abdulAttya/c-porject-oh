@@ -51,9 +51,9 @@ int main() {
   }
   // update history and simulate
   int queued = queueLength;
+  int done = 0;
   while (queued > 0) {
     operation *active = op;
-    int done = 0;
     do {
       if (active->tLeft > shareTime) {
         active->tLeft -= shareTime;
