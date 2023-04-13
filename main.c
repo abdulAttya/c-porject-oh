@@ -12,7 +12,7 @@ typedef struct operation {
 } operation;
 
 int insert(int duration, operation *head, int index);
-int update(char **history, operation *head, operation *active);
+int update(char **history, operation *head, operation *active, int realtime);
 
 int main() {
 
@@ -57,12 +57,15 @@ int main() {
   while (queued > 0) {
     operation *active = op;
     do {
-      update(history, op, active);
       if (active->tLeft > shareTime) {
+
+        update(history, op, active, shareTime);
         active->tLeft -= shareTime;
         active = active->next;
 
       } else {
+
+        update(history, op, active, active->tLeft);
         operation *temp = active;
         active = active->next;
         if (temp->prev != NULL)
@@ -106,14 +109,18 @@ int insert(int duration, operation *head, int index) {
     return insert(duration, head->next, index);
   }
 }
-int update(char **history, operation *head, operation *active) {
+int update(char **history, operation *head, operation *active, int realtime) {
 
   if (head == NULL || active == NULL) {
     return 1;
   }
   if (head == active)
-    strcat(history[head->index], "+");
+    for (int i = 0; i < realtime; i++) {
+      strcat(history[head->index], "+");
+    }
   else
-    strcat(history[head->index], "-");
-  return update(history, head->next, active);
+    for (int i = 0; i < realtime; i++) {
+      strcat(history[head->index], "-");
+    }
+  return update(history, head->next, active, realtime);
 }
