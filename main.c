@@ -1,5 +1,6 @@
 #include "grouper.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define MAX_OPERATIONS 50
@@ -11,12 +12,14 @@ typedef struct operation {
 } operation;
 
 int insert(int duration, operation *head, int index);
-int execute(int shareTime, operation *head);
+int update(char **history, operation *head, operation *active);
+
 int main() {
 
-  char history[MAX_OPERATIONS][MAX_OPERATIONS];
+  char **history = malloc(MAX_OPERATIONS * sizeof(char *));
   for (int i = 0; i < MAX_OPERATIONS; i++) {
-    history[i][0] = '\0';
+    history[i] = malloc(sizeof(char) * MAX_OPERATIONS);
+    history[i][0] = 0;
   }
 
   int shareTime = 0;
@@ -51,16 +54,12 @@ int main() {
   }
   // update history and simulate
   int queued = queueLength;
-  int done = 0;
   while (queued > 0) {
     operation *active = op;
     do {
+      update(history, op, active);
       if (active->tLeft > shareTime) {
         active->tLeft -= shareTime;
-        for (int i = 0; i < done; i++) {
-          strcat(history[active->index], "-");
-        }
-        strcat(history[active->index], "+");
         active = active->next;
 
       } else {
@@ -68,12 +67,13 @@ int main() {
         active = active->next;
         if (temp->prev != NULL)
           temp->prev->next = temp->next;
+        else
+          op = active;
         if (temp->next != NULL)
           temp->next->prev = temp->prev;
         free(temp);
         queued--;
       }
-      done++;
 
     } while (active != NULL);
   }
@@ -82,6 +82,10 @@ int main() {
     printf("operation N %i", i + 1);
     puts(history[i]);
   }
+  for (int i = 0; i < MAX_OPERATIONS; i++) {
+    free(history[i]);
+  }
+  free(history);
 }
 
 int insert(int duration, operation *head, int index) {
@@ -102,4 +106,14 @@ int insert(int duration, operation *head, int index) {
     return insert(duration, head->next, index);
   }
 }
-int execute(int shareTime, operation *head) {}
+int update(char **history, operation *head, operation *active) {
+
+  if (head == NULL || active == NULL) {
+    return 1;
+  }
+  if (head == active)
+    strcat(history[head->index], "+");
+  else
+    strcat(history[head->index], "-");
+  return update(history, head->next, active);
+}
